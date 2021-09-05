@@ -1,0 +1,40 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from scipy import stats
+
+%matplotlib inline
+#na값 쉽게 보는 함수
+import missingno as msno
+# Warnings 메세지 제거
+import warnings
+warnings.filterwarnings('ignore')
+
+# 데이터를 불러들이는 코드
+df_train = pd.read_csv('train.csv')
+df_test = pd.read_csv('test.csv')
+
+print(df_train.shape, df_test.shape)
+
+df_train.head()
+
+df_train.info()
+
+# 데이터를 합침
+df_test['Survived'] = 999
+df = pd.concat([df_train, df_test], axis = 0, ignore_index = True)
+
+msno.matrix(df, figsize = (12,5))
+
+# age와 embarked 채워넣기, cabin 변수제거
+for col in df.columns:
+  na = 'colum: {:>10}\t Percent of NaN value: {:.2f}%'.format(col, 100 * (df[col].isnull().sum() / df[col].shape[0]))
+  print(na)
+
+# 죽은사람과 산 사람의 숫자를 Pieplot으로 출력(죽은사람 = 0, 산사람 = 1)
+pie = df_train['Survived'].value_counts().plot.pie(autopct = '%.1f%%', cmap = 'Set3', startangle = 90, table = True)
+pie.set_title('Pie plot - Survived')
+pie.set_label
+pie.set_ylabel('')
+plt.show()
