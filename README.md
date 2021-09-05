@@ -1,6 +1,6 @@
 # Pre-processing-Exercise
 
-kaggle_icon https://www.kaggle.com/c/titanic
+kaggle_iconhttps://www.kaggle.com/c/titanic
 
 
 
