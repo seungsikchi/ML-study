@@ -1,0 +1,55 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import normalize
+from sklearn.preprocessing import StandardScaler
+
+# 데이터 불러오기
+data_loc ="http://github.com/dknife/ML/raw/main/data/"
+life = pd.read_csv(data_loc + 'life_expectancy.csv')
+life.head()
+
+life = life[['Life expectancy', 'Year', 'Alcohol',
+ 'Percentage expenditure', 'Total expenditure',
+ 'Hepatitis B', 'Measles', 'Polio', 'BMI', 'GDP',
+ 'Thinness 1-19 years', 'Thinness 5-9 years']]
+ 
+ life.dropna(inplace = True)
+
+# 상관관계 분석
+sns.set(rc = {'figure.figsize': (12,10)})
+correlation_matrix = life.corr().round(2)
+sns.heatmap(data = correlation_matrix, annot = True)
+plt.show()
+
+sns.pairplot(life[['Life expectancy', 'Alcohol', 'Percentage expenditure', 'Measles',
+'Polio', 'BMI', 'GDP', 'Thinness 1-19 years']])
+
+X = life[['Alcohol', 'Percentage expenditure', 'Polio',
+ 'BMI', 'GDP', 'Thinness 1-19 years']]
+y = life['Life expectancy']
+
+# 데이터를 표준화하기 위해서 설정하기
+scaler = StandardScaler()
+s_X = scaler.fit_transform(X)
+plt.hist(s_X, bins = 5)
+
+# 데이터를 나누고 표준화하기
+Xtrain, Xtest, y_train, y_test = train_test_split(X, y, test_size=0.2)
+sXtrain = scaler.fit_transform(Xtrain)
+sXtest = scaler.fit_transform(Xtest)
+
+# 선형회귀로 예측하기
+lin_model = LinearRegression()
+lin_model.fit(sXtrain, y_train)
+y_hat_train = lin_model.predict(sXtrain)
+y_hat_test = lin_model.predict(sXtest)
+
+# 결과 확인하기 train predict는 빨강색 test predict는 파랑색 점
+plt.scatter(y_train, y_hat_train, color='r')
+plt.scatter(y_test, y_hat_test, color='b')
+plt.plot(xy_range, xy_range)
