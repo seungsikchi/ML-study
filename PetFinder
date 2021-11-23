@@ -3,30 +3,38 @@ import pandas as pd
 import os
 import cv2
 import missingno as msno
-from pathlib import Path
-from tqdm import tqdm
 import wandb
 import seaborn as sns
 import matplotlib.pyplot as plt
 import missingno as msno
-
-train=pd.read_csv('../input/petfinder-pawpularity-score/train.csv')
-test=pd.read_csv('../input/petfinder-pawpularity-score/test.csv')
+import tensorflow as tf
 
 from tensorflow import keras
 from tensorflow.keras import layers
 from sklearn.model_selection import KFold
 from keras.callbacks import ModelCheckpoint, EarlyStopping
-import tensorflow as tf
+from pathlib import Path
+from tqdm import tqdm
+
+train=pd.read_csv('../input/petfinder-pawpularity-score/train.csv')
+test=pd.read_csv('../input/petfinder-pawpularity-score/test.csv')
+
 
 train["file_path"] = train["Id"].apply(lambda x: "../input/petfinder-pawpularity-score/train/" + x + ".jpg")
 test["file_path"] = test["Id"].apply(lambda x: "../input/petfinder-pawpularity-score/test/" + x + ".jpg")
 
 image_size = 128
+
+def Normalize(image):
+        maxvalue = np.max(image)  
+        image = image/maxvalue   
+        return image'
+
 def preprocess(image_url):
-    image_string = tf.io.read_file(image_url)
-    image = tf.image.decode_jpeg(image_string, channels=3)
-    image = tf.cast(image, tf.float32) / 255.0
+    image = cv2.imread(image_url)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    image = tf.cast(image, tf.float32)
+    image = Normalize(image)
 #     image = tf.image.central_crop(image, 1.0)
     image = tf.image.resize(image, (image_size, image_size))
     return image
@@ -52,16 +60,19 @@ model = tf.keras.Sequential([
     tf.keras.layers.Conv2D(filters=16,kernel_size=3,strides=2,padding='same',activation='relu'),
     tf.keras.layers.Conv2D(filters=32,kernel_size=3,strides=2,padding='same',activation='relu'),
     tf.keras.layers.Flatten(),
-    tf.keras.layers.Dense(128, activation = "relu"),
+    tf.keras.layers.Dense(128, activation = "sigmoid"),
     tf.keras.layers.Dropout(0.3),
-    tf.keras.layers.Dense(64, activation = "relu"),
+    tf.keras.layers.Dense(64, activation = "sigmoid"),
     tf.keras.layers.Dropout(0.3),
-    tf.keras.layers.Dense(1),
+    tf.keras.layers.Dense(64, activation = "sigmoid"),
+    tf.keras.layers.Dropout(0.3),
+    tf.keras.layers.Dense(1)
 ])
 
 optimizer = tf.keras.optimizers.Adam(learning_rate = 0.0001)
+rmse_loss = tf.keras.metrics.RootMeanSquaredError(name="rmse")
 
-model.compile(optimizer = optimizer, loss = 'mse', metrics=[tf.keras.metrics.RootMeanSquaredError(name="rmse"), "mae", "mape"])
+model.compile(optimizer = optimizer, loss = 'mse', metrics=[rmse_loss, "mae", "mape"])
 
 early_stopping = EarlyStopping(monitor = 'rmse', min_delta = 0.00001, patience = 50, verbose =1, mode = 'auto', baseline = None, restore_best_weights = True)
 reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(factor=0.001,patience=30, min_lr=0.00001)
