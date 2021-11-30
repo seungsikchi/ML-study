@@ -1,11 +1,7 @@
 ○ datetime - hourly date + timestamp
-
 ○ season - 1 = spring, 2 = summer, 3 = fall, 4 = winter
-
 ○ holiday - whether the day is considered a holiday
-
 ○ workingday - whether the day is neither a weekend nor holiday
-
 ○ weather - 1: Clear, Few clouds, Partly cloudy, Partly cloudy
  2: Mist + Cloudy, Mist + Broken clouds, Mist + Few clouds, Mist
  3: Light Snow, Light Rain + Thunderstorm + Scattered clouds, Light Rain +
@@ -13,15 +9,81 @@ Scattered clouds
  4: Heavy Rain + Ice Pallets + Thunderstorm + Mist, Snow + Fog
 
 ○ temp - temperature in Celsius
-
 ○ atemp - "feels like" temperature in Celsius
-
 ○ humidity - relative humidity
-
 ○ windspeed - wind speed
-
 ○ casual - number of non-registered user rentals initiated
-
 ○ registered - number of registered user rentals initiated
-
 ○ count - number of total rentals
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# 데이터 불러오기
+train = pd.read_csv("./data/bike/train.csv", parse_dates=["datetime"]) # 데이터를 불러오는 코드
+print(train.shape)
+
+test = pd.read_csv("./데이터/bike/test.csv", parse_dates=["datetime"])
+print(test.shape)
+
+# Preprocessing
+# 데이터에 대한 전처리 과정
+# datatime을 년도와 달 일 시간등으로 나누는 과정
+train["datetime-year"] = train["datetime"].dt.year
+train["datetime-month"] = train["datetime"].dt.month
+train["datetime-day"] = train["datetime"].dt.day
+train["datetime-hour"] = train["datetime"].dt.hour
+train["datetime-dayofweek"] = train["datetime"].dt.dayofweek
+train["datetime-weekday_name"] = train["datetime"].dt.day_name()
+train.head()
+
+test["datetime-year"] = test["datetime"].dt.year
+test["datetime-month"] = test["datetime"].dt.month
+test["datetime-day"] = test["datetime"].dt.day
+test["datetime-hour"] = test["datetime"].dt.hour
+test["datetime-dayofweek"] = test["datetime"].dt.dayofweek
+test["datetime-weekday_name"] = test["datetime"].dt.day_name()
+test.head()
+
+# 데이터 분석
+sns.barplot(data=train, x="datetime-day", y="count")
+sns.barplot(data=train, x="datetime-year", y="count")
+sns.barplot(data=train, x="datetime-month", y="count")
+sns.barplot(data=train, x="datetime-hour", y="count")
+sns.barplot(data=train, x="datetime-weekday_name", y="count")
+train["datetime-year-month"] = train["datetime-year"].astype(str) +"_" + train["datetime-month"].astype(str)
+train.head()
+
+sns.barplot(data=train, x="datetime-year-month", y="count")
+sns.barplot(data=train, x="datetime-hour", y="count")
+sns.pointplot(data=train, x="datetime-hour", y="count", hue="workingday")
+sns.pointplot(data=train, x="datetime-hour", y="count", hue="datetime-weekday_name")
+
+#특이점
+# ○ 평일 출근시간, 퇴근시간 자전거 대여량이 많다.
+# ○ 주말에는 출퇴근시간에대 보다는 오후 시간에 대여량이 많다.
+
+# 요일별로 살펴보면
+# ○ 금요일에는 낮시간에 자전거 대여량이 많고, 퇴근시간에는 대여량이 적다.
+# ○ 월요일 오후에도 대여량이 많다.
+# ○ 주말에는 토요일이 일요일보다 대여량이 많다.
+
+# Featuring
+# ○ 어떤 데이터를 활용하여 머신러닝을 이용할 것인가.
+
+feature_names = ["season", "holiday", "workingday", "weather", "temp", "atemp",
+"humidity",
+ "windspeed", "datetime-year", "datetime-hour", "datetime-dayofweek"]
+ 
+print(feature_names)
+
+lable_name = "count"
+X_train = train[feature_names]
+X_train.head()
+
+X_test = test[feature_names]
+X_test.head()
+
+y_train = train[lable_name]
+y_train.head()
